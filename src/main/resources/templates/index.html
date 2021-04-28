@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+    <style>
+        table{
+            border-color: white;
+        }
+    </style>
+</head>
+<body>
+<h1>添加规则</h1>
+<form>
+    <table id="saveForm" width="100%" border="1">
+        <tr>
+            <td>ruleKey</td>
+            <td><input type="text" id="ruleKey"/></td>
+        </tr>
+        <tr>
+            <td>pName</td>
+            <td><input type="text" id="pName"/></td>
+        </tr>
+        <tr>
+            <td>pReg</td>
+            <td><input type="text" id="pReg"/></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <button onclick="save()">提交</button>
+            </td>
+        </tr>
+    </table>
+
+
+</form>
+<hr>
+<h1>规则字段</h1>
+
+<table width="100%" border="1">
+    <tbody>
+    <tr>
+        <td>id</td>
+        <td>ruleKey</td>
+        <td>pName</td>
+        <td>pReg</td>
+        <td>操作</td>
+    </tr>
+    </tbody>
+    <tbody id="eleTbd">
+
+    </tbody>
+</table>
+<hr>
+<h1>生成规则</h1>
+<p>
+
+    输入ruleKey信息，生成drools： <input type="text" id="pIdGo"/> <input type="button" onclick="goDrools()" value="生成">
+    <script>
+
+        function goDrools() {
+            var ruleKey = $("#pIdGo").val();
+
+            $.ajax({
+                url: 'http://localhost:8082/rule/generatorRule?ruleKey=' + ruleKey,
+                success: function (data) {
+                    location.reload()
+                }
+            });
+        }
+    </script>
+</p>
+
+<hr>
+
+<h1>触发规则</h1>
+<form id="formData" action="" onsubmit="return false">
+    <table id="ruleFormTrigger" border="1">
+
+        <tr>
+            <td>ruleKey</td>
+            <td>pName</td>
+            <td>pVal</td>
+            <td>操作</td>
+        </tr>
+        <tbody id="addRowBody">
+        <tr>
+            <td><input type="text" name="ruleKey"/></td>
+            <td><input type="text" name="pName"/></td>
+            <td><input type="text" name="pVal"/></td>
+            <td>
+                <button onclick="addRow()">添加一行</button>
+            </td>
+        </tr>
+        </tbody>
+        <tr>
+            <td colspan="4">
+                <button onclick="trigger()">触发</button>
+            </td>
+        </tr>
+        <script>
+            function addRow() {
+                var row = "<tr>\n" +
+                    "        <td><input type=\"text\" name=\"ruleKey\"/></td>\n" +
+                    "        <td><input type=\"text\" name=\"pName\"/></td>\n" +
+                    "        <td><input type=\"text\" name=\"pVal\"/></td>\n" +
+                    "        <td><button onclick=\"addRow()\">添加一行</button></td>\n" +
+                    "    </tr>";
+
+                $("#addRowBody").append(row)
+            }
+
+            function trigger() {
+                var params = []
+                $("#addRowBody tr").each(function (i, obj) {
+                    var param = {};
+                    param.ruleKey = $(obj).find("input[name='ruleKey']").val();
+                    param.pName = $(obj).find("input[name='pName']").val();
+                    param.pVal = $(obj).find("input[name='pVal']").val();
+                    params.push(param)
+                })
+
+                $.ajax({
+                    url: 'http://localhost:8082/rule/triggerRule',
+                    type: 'post',
+                    contentType: 'application/json',
+                    data: JSON.stringify(params),
+                    success: function (obj) {
+                        $("#ret").find("li").remove();
+
+                        var li = "<li>"+obj.success+"</li>"
+                            var li1 = "<li>"+obj.message+"</li>"
+
+                            var li2 = "<li>"+obj.errorMsgList+"</li>"
+
+                            $("#ret").append(li)
+                            $("#ret").append(li1)
+                            $("#ret").append(li2)
+                    }
+                });
+            }
+        </script>
+    </table>
+</form>
+
+<h3>执行结果</h3>
+<ul id="ret">
+</ul>
+
+<hr>
+
+<h1>规则信息</h1>
+<button onclick="onReload()">加载所有</button>
+<table width="100%" border="1">
+    <tbody>
+    <tr>
+        <td>id</td>
+        <td>ruleKey</td>
+        <td>ruleContent</td>
+    </tr>
+    </tbody>
+    <tbody id="ruleTbd">
+
+    </tbody>
+</table>
+
+
+</body>
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+    $(function () {
+        $.ajax({
+            url: 'http://localhost:8082/element/findAll',
+            type: 'post',
+            success: function (data) {
+                var html = "";
+                $(data).each(function (i, obj) {
+
+                    var content = "<tr>" +
+                        "<td>" + obj.id + "</td>" +
+                        "<td>" + obj.ruleKey + "</td>" +
+                        "<td>" + obj.pName + "</td>" +
+                        "<td>" + obj.pReg + "</td>" +
+                        "<td>" +
+                        "<button onclick='remove(" + obj.id + ")'>删除</button>" +
+                        "</td>" +
+                        "</tr>"
+
+                    html += content;
+                })
+                $("#eleTbd").append(html);
+            }
+        });
+
+        $.ajax({
+            url: 'http://localhost:8082/rule/findAll',
+            type: 'post',
+            success: function (data) {
+                var html = "";
+
+                $(data).each(function (i, obj) {
+                    var content = "<tr>" +
+                        "<td>" + obj.id + "</td>" +
+                        "<td>" + obj.ruleKey + "</td>" +
+                        "<td><p>" + obj.content + "</p></td>" +
+                        "</tr>";
+
+                    html += content;
+                })
+                $("#ruleTbd").append(html)
+            }
+        });
+    });
+
+    function loadRule(id) {
+        $.ajax({
+            url: 'http://localhost:8082/rule/loadRule?id=' + id,
+            success: function (data) {
+                location.reload()
+            }
+        });
+    }
+
+    function onReload(){
+        $.ajax({
+            url:'http://localhost:8082/rule/loadRule',
+            success: function (data){
+                location.reload()
+            }
+        });
+    }
+
+    function remove(id) {
+        $.ajax({
+            url: 'http://localhost:8082/element/remove?id=' + id,
+            success: function (data) {
+                location.reload()
+            }
+        });
+    }
+
+    function save() {
+        var ruleKey = $("#ruleKey").val();
+        var pName = $("#pName").val();
+        var pReg = $("#pReg").val();
+
+        var json = {'ruleKey': ruleKey, 'pName': pName, 'pReg': pReg};
+        console.log(json)
+        console.log(JSON.stringify(json))
+
+        $.ajax({
+            url: 'http://localhost:8082/element/save',
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify(json),
+            success: function (data) {
+                location.reload()
+            }
+        })
+
+    }
+</script>
+</html>
