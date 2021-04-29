@@ -61,7 +61,6 @@ public class RuleConfiguration {
         long endTime = System.currentTimeMillis();
         System.out.println("Time to build rules : " + (endTime - startTime) + " ms");
         startTime = System.currentTimeMillis();
-
         KieContainer kContainer = ks.newKieContainer(kr.getDefaultReleaseId());
 
         endTime = System.currentTimeMillis();
